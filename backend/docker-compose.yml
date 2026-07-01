@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: creatorforge-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: creatorforge
+      POSTGRES_USER: creatorforge
+      POSTGRES_PASSWORD: creatorforge
+    ports:
+      - "5433:5432"
+    volumes:
+      - creatorforge_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U creatorforge -d creatorforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: creatorforge-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+
+volumes:
+  creatorforge_postgres_data:
