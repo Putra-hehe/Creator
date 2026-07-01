@@ -7,21 +7,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     api_prefix: str = "/api"
 
-    import os
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://creatorforge:creatorforge@db:5432/creatorforge"
-)
-
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-
-DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
-
-engine = create_async_engine(DATABASE_URL, echo=False)
-AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+    database_url: str = "postgresql+asyncpg://creatorforge:creatorforge@db:5432/creatorforge"
 
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
@@ -29,11 +15,30 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
     @property
     def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        return [
+            origin.strip()
+            for origin in self.allowed_origins.split(",")
+            if origin.strip()
+        ]
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.database_url
+
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+        url = url.replace("sslmode=require", "ssl=require")
+
+        return url
 
 
 @lru_cache
