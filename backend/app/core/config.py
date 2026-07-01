@@ -7,7 +7,21 @@ class Settings(BaseSettings):
     app_env: str = "development"
     api_prefix: str = "/api"
 
-    database_url: str = "postgresql+asyncpg://creatorforge:creatorforge@db:5432/creatorforge"
+    import os
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://creatorforge:creatorforge@db:5432/creatorforge"
+)
+
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
+
+engine = create_async_engine(DATABASE_URL, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
